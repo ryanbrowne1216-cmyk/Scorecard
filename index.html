@@ -1,89 +1,498 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<title>Live Football Scorecard</title>
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
+html,
 body {
     margin: 0;
-    background: #000;
-    font-family: Arial, sans-serif;
-}
-
-.player {
-    position: relative;
+    padding: 0;
     width: 100%;
-    max-width: 900px;
-    margin: auto;
+    min-height: 100%;
+    background: transparent !important;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
-video {
-    width: 100%;
-    display: block;
-}
-
+/* MAIN SCORECARD */
 .scorecard {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: rgba(0,0,0,.85);
+    width: 360px;
+    max-width: 96vw;
+    margin: 20px auto;
+
+    background: transparent;
+
     color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
+    text-align: center;
+
+    user-select: none;
+}
+
+/* TOP BAR */
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 6px 12px;
+
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 7px 7px 0 0;
+}
+
+.live {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.dot {
+    color: #00ff66;
+    font-size: 11px;
+}
+
+.timer {
+    font-size: 16px;
     font-weight: bold;
 }
 
+/* TEAMS */
 .teams {
-    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 9px 12px;
+
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.team {
+    width: 42%;
+    text-align: center;
+}
+
+.team-name {
+    font-size: 14px;
+    font-weight: bold;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    text-shadow: 0 1px 3px black;
 }
 
 .score {
-    font-size: 24px;
-    margin-top: 3px;
+    margin-top: 2px;
+
+    font-size: 30px;
+    line-height: 32px;
+    font-weight: 800;
+
+    text-shadow: 0 2px 4px black;
 }
 
-.status {
-    color: #00ff66;
+.vs {
+    width: 16%;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    color: #dddddd;
+}
+
+/* CONTROLS */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+
+    margin-top: 8px;
+}
+
+button {
+    border: none;
+    outline: none;
+
+    padding: 7px 10px;
+
+    border-radius: 5px;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.75);
+
+    font-size: 11px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: rgba(40, 40, 40, 0.9);
+}
+
+/* GOAL BUTTONS */
+.goal-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+
+    margin-top: 7px;
+}
+
+.goal-box {
+    display: flex;
+    gap: 4px;
+}
+
+.add {
+    background: rgba(0, 120, 60, 0.9);
+}
+
+.minus {
+    background: rgba(150, 25, 25, 0.9);
+}
+
+/* TEAM NAME EDIT */
+.edit-area {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+
+    margin-top: 8px;
+}
+
+.edit-area input {
+    width: 130px;
+
+    padding: 6px;
+
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 5px;
+
+    outline: none;
+
+    background: rgba(0,0,0,0.65);
+    color: white;
+
+    text-align: center;
     font-size: 12px;
+}
+
+/* HIDE ADMIN CONTROLS */
+.hidden {
+    display: none;
 }
 </style>
 </head>
 
 <body>
 
-<div class="player">
+<div class="scorecard">
 
-    <video id="video" controls autoplay muted></video>
+    <!-- TOP -->
+    <div class="top">
 
-    <div class="scorecard">
-        <div class="status">● LIVE 67'</div>
-        <div class="teams">India &nbsp; vs &nbsp; Brazil</div>
-        <div class="score">2 - 1</div>
+        <div class="live">
+            <span class="dot">●</span>
+            <span id="status">READY</span>
+        </div>
+
+        <div class="timer" id="timer">
+            00:00
+        </div>
+
+    </div>
+
+
+    <!-- TEAMS -->
+    <div class="teams">
+
+        <div class="team">
+
+            <div class="team-name" id="team1Name">
+                TEAM A
+            </div>
+
+            <div class="score" id="score1">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="vs">
+            VS
+        </div>
+
+
+        <div class="team">
+
+            <div class="team-name" id="team2Name">
+                TEAM B
+            </div>
+
+            <div class="score" id="score2">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TEAM NAME EDIT -->
+    <div class="edit-area">
+
+        <input
+            id="team1Input"
+            type="text"
+            value="TEAM A"
+            placeholder="Team A"
+        >
+
+        <input
+            id="team2Input"
+            type="text"
+            value="TEAM B"
+            placeholder="Team B"
+        >
+
+    </div>
+
+
+    <!-- GOAL CONTROLS -->
+    <div class="goal-controls">
+
+        <div class="goal-box">
+
+            <button
+                class="add"
+                onclick="addGoal(1)"
+            >
+                + GOAL
+            </button>
+
+            <button
+                class="minus"
+                onclick="removeGoal(1)"
+            >
+                −
+            </button>
+
+        </div>
+
+
+        <div class="goal-box">
+
+            <button
+                class="add"
+                onclick="addGoal(2)"
+            >
+                + GOAL
+            </button>
+
+            <button
+                class="minus"
+                onclick="removeGoal(2)"
+            >
+                −
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- TIMER CONTROLS -->
+    <div class="controls">
+
+        <button onclick="startTimer()">
+            START
+        </button>
+
+        <button onclick="pauseTimer()">
+            PAUSE
+        </button>
+
+        <button onclick="resetMatch()">
+            RESET
+        </button>
+
     </div>
 
 </div>
 
+
 <script>
-const video = document.getElementById('video');
 
-const stream =
-"http://10.98.233.37:8080/live/news/hls.m3u8";
+/* =========================
+   MATCH DATA
+========================= */
 
-if (Hls.isSupported()) {
+let seconds = 0;
 
-    const hls = new Hls();
+let timer = null;
 
-    hls.loadSource(stream);
-    hls.attachMedia(video);
+let score1 = 0;
+let score2 = 0;
 
-} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
 
-    video.src = stream;
+/* =========================
+   TIMER
+========================= */
 
+function updateTimer() {
+
+    let minutes = Math.floor(seconds / 60);
+
+    let secs = seconds % 60;
+
+    document.getElementById("timer").innerText =
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(secs).padStart(2, "0");
 }
+
+
+function startTimer() {
+
+    if (timer !== null) {
+        return;
+    }
+
+    document.getElementById("status").innerText =
+        "LIVE";
+
+    timer = setInterval(function() {
+
+        seconds++;
+
+        updateTimer();
+
+    }, 1000);
+}
+
+
+function pauseTimer() {
+
+    if (timer !== null) {
+
+        clearInterval(timer);
+
+        timer = null;
+    }
+
+    document.getElementById("status").innerText =
+        "PAUSED";
+}
+
+
+function resetMatch() {
+
+    clearInterval(timer);
+
+    timer = null;
+
+    seconds = 0;
+
+    score1 = 0;
+
+    score2 = 0;
+
+    document.getElementById("score1").innerText = "0";
+
+    document.getElementById("score2").innerText = "0";
+
+    document.getElementById("status").innerText =
+        "READY";
+
+    updateTimer();
+}
+
+
+/* =========================
+   SCORE
+========================= */
+
+function addGoal(team) {
+
+    if (team === 1) {
+
+        score1++;
+
+        document.getElementById("score1").innerText =
+            score1;
+    }
+
+
+    if (team === 2) {
+
+        score2++;
+
+        document.getElementById("score2").innerText =
+            score2;
+    }
+}
+
+
+function removeGoal(team) {
+
+    if (team === 1 && score1 > 0) {
+
+        score1--;
+
+        document.getElementById("score1").innerText =
+            score1;
+    }
+
+
+    if (team === 2 && score2 > 0) {
+
+        score2--;
+
+        document.getElementById("score2").innerText =
+            score2;
+    }
+}
+
+
+/* =========================
+   TEAM NAME
+========================= */
+
+document
+    .getElementById("team1Input")
+    .addEventListener("input", function() {
+
+        document.getElementById("team1Name").innerText =
+            this.value || "TEAM A";
+    });
+
+
+document
+    .getElementById("team2Input")
+    .addEventListener("input", function() {
+
+        document.getElementById("team2Name").innerText =
+            this.value || "TEAM B";
+    });
+
+
+/* =========================
+   INITIAL
+========================= */
+
+updateTimer();
+
 </script>
 
 </body>
